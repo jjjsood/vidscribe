@@ -9,6 +9,9 @@ and do not add a dependency for something a few lines can do.
 4. Keep commit messages short and in the imperative ("Add --cpu flag").
 
 Releasing: bump `VERSION` in `vidscribe` and the man page header, add the entries to
-`CHANGELOG.md` and `debian/changelog`, run `make deb`, tag `vX.Y`.
+`CHANGELOG.md` and `debian/changelog` (`make check` fails if the versions disagree), run
+`make deb`, commit, then `git tag vX.Y && git push origin main vX.Y`. After the tests pass, CI
+uploads the signed source package to the PPA and publishes a GitHub release with the `.deb`.
+A PPA version can be uploaded only once, so a fix needs a new version number.
 
 Test fixtures under `tests/fixtures/` keep their own license, see `ATTRIBUTION.md` there.

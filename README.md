@@ -47,8 +47,13 @@ git clone https://github.com/jjjsood/vidscribe.git && cd vidscribe
 sudo make install
 ```
 
-To install without root, use `make install PREFIX=~/.local`. To build a `.deb` instead,
-run `make deb` and install `../vidscribe_*_all.deb`.
+To install without root, use `make install PREFIX=~/.local`.
+
+Or install the package:
+
+- from the PPA: `sudo add-apt-repository ppa:jjjsood/vidscribe && sudo apt install vidscribe`
+- from the `.deb` on the [Releases](https://github.com/jjjsood/vidscribe/releases) page
+- built yourself: `make deb`, then install `../vidscribe_*_all.deb`
 
 For GPU transcription, also install `libggml0-backend-vulkan`.
 

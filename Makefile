@@ -6,6 +6,8 @@ all:
 
 check:
 	bash tests/smoke.sh --quick
+	@v=$$(dpkg-parsechangelog -S Version); grep -q "^VERSION=$$v$$" vidscribe && grep -q "vidscribe $$v\"" vidscribe.1 \
+	  || { echo "version mismatch: debian/changelog $$v vs vidscribe / vidscribe.1" >&2; exit 1; }
 
 test:
 	bash tests/smoke.sh

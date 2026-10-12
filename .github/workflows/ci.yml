@@ -39,3 +39,51 @@ jobs:
           key: whisper-model-tiny
       - name: Transcribe the fixture
         run: make test
+
+  # Tag vX.Y: signed source upload to the PPA, Launchpad builds the .deb.
+  # The signing key lives in the 'ppa' environment, which only tags v* may use.
+  ppa:
+    needs: [test, transcribe]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ppa
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential debhelper devscripts dput gnupg
+      - name: Tag matches package version
+        run: test "v$(dpkg-parsechangelog -S Version)" = "$GITHUB_REF_NAME"
+      - name: Sign and upload the source package
+        env:
+          PPA_GPG_KEY: ${{ secrets.PPA_GPG_KEY }}
+          PPA_GPG_FPR: ${{ secrets.PPA_GPG_FPR }}
+        run: |
+          printf %s "$PPA_GPG_KEY" | gpg --batch --import
+          debuild -S -sa -k"$PPA_GPG_FPR"
+          dput ppa:jjjsood/vidscribe ../vidscribe_*_source.changes
+
+  # Tag vX.Y: GitHub release with the .deb, the source package and checksums.
+  release:
+    needs: [test, transcribe]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential debhelper
+      - name: Tag matches package version
+        run: test "v$(dpkg-parsechangelog -S Version)" = "$GITHUB_REF_NAME"
+      - name: Build
+        run: dpkg-buildpackage -us -uc
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ( cd .. && sha256sum vidscribe_*_all.deb vidscribe_*.dsc vidscribe_*.tar.xz ) > SHA256SUMS
+          dpkg-parsechangelog -S Changes | tail -n +4 | sed "s/^ //" > notes.md
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "vidscribe ${GITHUB_REF_NAME#v}" \
+            --notes-file notes.md ../vidscribe_*_all.deb ../vidscribe_*.dsc ../vidscribe_*.tar.xz SHA256SUMS
