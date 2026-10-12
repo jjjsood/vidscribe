@@ -4,6 +4,9 @@ Priority: optional
 Maintainer: Johannes Sood <info@somestrangedays.dev>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.7.0
+Homepage: https://github.com/jjjsood/vidscribe
+Vcs-Git: https://github.com/jjjsood/vidscribe.git
+Vcs-Browser: https://github.com/jjjsood/vidscribe
 Rules-Requires-Root: no
 
 Package: vidscribe

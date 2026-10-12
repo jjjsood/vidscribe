@@ -5,6 +5,7 @@
 
   *Video link in, timed transcript out. Runs locally.*
 
+  [![CI](https://github.com/jjjsood/vidscribe/actions/workflows/ci.yml/badge.svg)](https://github.com/jjjsood/vidscribe/actions/workflows/ci.yml)
   [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   ![Shell](https://img.shields.io/badge/shell-bash-4eaa25.svg)
   ![Platform](https://img.shields.io/badge/platform-Debian%20%7C%20Ubuntu-a80030.svg)
@@ -38,10 +39,11 @@ $ cat "Me at the zoo.srt"
 
 ## Installation
 
-On Debian or Ubuntu, from a checkout of this repository:
+On Debian or Ubuntu:
 
 ```sh
 sudo apt install yt-dlp ffmpeg whisper.cpp curl
+git clone https://github.com/jjjsood/vidscribe.git && cd vidscribe
 sudo make install
 ```
 
