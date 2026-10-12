@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/vidscribe PREFIX=/usr
+
+# 'make test' needs network and a model; the quick checks are enough at build time.
+override_dh_auto_test:
+	$(MAKE) check

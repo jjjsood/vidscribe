@@ -1,0 +1,83 @@
+.TH VIDSCRIBE 1 "2026-10-12" "vidscribe 0.1"
+.SH NAME
+vidscribe \- video URL or media file to timed transcript
+.SH SYNOPSIS
+.B vidscribe
+.IR URL | FILE ...
+.RB [ \-f
+.IR formats ]
+.RB [ \-m
+.IR model ]
+.RB [ \-l
+.IR lang ]
+.RB [ \-o
+.IR dir ]
+.RB [ \-c
+.IR browser ]
+.RB [ \-\-json\-full ]
+.RB [ \-\-keep\-video ]
+.RB [ \-\-cpu ]
+.RB [ \-V ]
+.SH DESCRIPTION
+Turns the speech in a video into a timed transcript. Give it a video link
+(Instagram, YouTube and most other video sites) or a local audio/video file
+and it writes the spoken text with timestamps as txt, srt, vtt or json into
+the output directory. The written file names are printed to stdout.
+.PP
+Several sources can be given in one call. A source that fails is reported and
+skipped; the others are still processed and the exit status is non\-zero.
+An existing transcript is never overwritten: the next one with the same title
+becomes \fItitle\-2\fR, \fItitle\-3\fR, and so on.
+.PP
+Built on yt\-dlp and whisper.cpp.
+.SH OPTIONS
+.TP
+.BI \-f " formats"
+Comma separated list of txt, srt, vtt, json. Default: all four.
+srt, vtt and json carry timestamps.
+.TP
+.BI \-m " model"
+whisper.cpp model name, e.g. small, medium, large\-v3\-turbo. Default: small.
+.TP
+.BI \-l " lang"
+Spoken language (de, en, ...) or auto. Default: auto.
+.TP
+.BI \-o " dir"
+Output directory, created if missing. Default: current directory.
+.TP
+.BI \-c " browser"
+Pass cookies from this browser to yt\-dlp, e.g. firefox. Needed for
+login\-walled Instagram reels.
+.TP
+.B \-\-json\-full
+JSON output including per\-token timing.
+.TP
+.B \-\-keep\-video
+Also save the downloaded media file, merged into one file (URL input only).
+.TP
+.B \-\-cpu
+Do not use the GPU.
+.TP
+.B \-V, \-\-version
+Print the version and exit.
+.TP
+.B \-h, \-\-help
+Show usage.
+.SH FILES
+.TP
+.I ~/.local/share/vidscribe/ggml\-MODEL.bin
+Model cache. Downloaded from huggingface.co/ggerganov/whisper.cpp on first use
+(small is about 470 MB) and verified against the published SHA\-256.
+Honors XDG_DATA_HOME.
+.SH EXAMPLES
+.nf
+vidscribe https://www.youtube.com/watch?v=ID \-l en \-f srt
+vidscribe https://www.instagram.com/reel/ID/ \-c firefox \-o ~/transcripts
+vidscribe talk.mp4 \-m large\-v3\-turbo
+vidscribe a.mp4 b.mp4 \-f txt \-\-cpu
+.fi
+.SH EXIT STATUS
+0 if every source was transcribed, 1 otherwise.
+.SH SEE ALSO
+.BR yt\-dlp (1),
+.BR ffmpeg (1)

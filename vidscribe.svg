@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="vidscribe">
+  <rect width="64" height="64" fill="#16201b"/>
+  <path d="M14 14v36l22-18z" fill="#ffffff"/>
+  <path d="M42 17h12v6H42zM42 29h8v6h-8zM42 41h12v6H42z" fill="#7fb89c"/>
+</svg>

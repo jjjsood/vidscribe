@@ -1,0 +1,17 @@
+Source: vidscribe
+Section: video
+Priority: optional
+Maintainer: Johannes Sood <info@somestrangedays.dev>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: vidscribe
+Architecture: all
+Depends: ${misc:Depends}, yt-dlp, ffmpeg, whisper.cpp, curl
+Recommends: libggml0-backend-vulkan
+Description: video URL to timed transcript (txt, srt, vtt, json)
+ vidscribe downloads audio from any site yt-dlp supports (Instagram,
+ YouTube, ...) or reads a local media file, transcribes it with whisper.cpp
+ and writes txt, srt, vtt and json with timestamps. The whisper model is
+ downloaded on first run to ~/.local/share/vidscribe.

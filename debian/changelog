@@ -1,0 +1,19 @@
+vidscribe (0.1) resolute; urgency=medium
+
+  * Initial release.
+  * Turn a video URL (anything yt-dlp supports) or a local audio/video file
+    into a timed transcript with whisper.cpp.
+  * Output formats txt, srt, vtt and json (-f); --json-full adds per-token
+    timing.
+  * Accept several URLs/files in one call; a failing source does not stop
+    the others, the exit status is non-zero.
+  * Select model (-m), language (-l) and output directory (-o).
+  * Download models once and verify them against the published SHA-256.
+  * Add -c to pass browser cookies to yt-dlp for login-walled videos.
+  * Add --keep-video to also save the merged downloaded media file.
+  * Add --cpu to disable the GPU and -V/--version.
+  * Never overwrite existing transcripts (title-2.*, title-3.*, ...).
+  * Sanitize downloaded titles for use as file names.
+  * Ship a man page, Makefile, CI and tests with a CC BY-SA speech fixture.
+
+ -- Johannes Sood <info@somestrangedays.dev>  Mon, 12 Oct 2026 01:08:47 +0200

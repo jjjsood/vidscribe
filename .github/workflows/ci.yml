@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y shellcheck ffmpeg yt-dlp curl debhelper lintian
+      - name: Lint
+        run: make lint
+      - name: Quick checks
+        run: make check
+      - name: Build and lint the Debian package
+        run: make deb
+
+  # Full transcription with a CPU-only whisper.cpp build; the tiny model keeps it fast.
+  transcribe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg yt-dlp curl cmake build-essential
+          git clone --depth 1 --branch v1.8.3 https://github.com/ggml-org/whisper.cpp /tmp/whisper.cpp
+          cmake -S /tmp/whisper.cpp -B /tmp/whisper.cpp/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/whisper.cpp/build -j --target whisper-cli
+          sudo install /tmp/whisper.cpp/build/bin/whisper-cli /usr/local/bin/whisper-cli
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/vidscribe
+          key: whisper-model-tiny
+      - name: Transcribe the fixture
+        run: make test

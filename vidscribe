@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# vidscribe: video URL (or local media file) -> transcript with timing.
+set -euo pipefail
+
+VERSION=0.1
+
+usage() {
+  cat <<'EOF'
+Usage: vidscribe URL|FILE... [options]
+  -f LIST     formats, comma separated: txt,srt,vtt,json   (default: all)
+  -m MODEL    whisper model, e.g. small, medium, large-v3-turbo   (default: small)
+  -l LANG     auto, de, en, ...   (default: auto)
+  -o DIR      output directory   (default: .)
+  -c BROWSER  take cookies from browser, e.g. firefox (login-walled Instagram)
+  --json-full JSON with per-token timing
+  --keep-video  also save the downloaded video/audio file (URL only)
+  --cpu       do not use the GPU
+  -V          print version
+  -h          this help
+EOF
+}
+
+die() { echo "vidscribe: $*" >&2; exit 1; }
+
+formats=txt,srt,vtt,json model=small lang=auto outdir=. browser='' jsonflag=-oj keep='' cpu=()
+srcs=()
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help) usage; exit 0 ;;
+    -V|--version) echo "vidscribe $VERSION"; exit 0 ;;
+    -f) formats=${2:?-f needs a value}; shift 2 ;;
+    -m) model=${2:?-m needs a value}; shift 2 ;;
+    -l) lang=${2:?-l needs a value}; shift 2 ;;
+    -o) outdir=${2:?-o needs a value}; shift 2 ;;
+    -c) browser=${2:?-c needs a value}; shift 2 ;;
+    --json-full) jsonflag=-ojf; shift ;;
+    --keep-video) keep=1; shift ;;
+    --cpu) cpu=(-ng); shift ;;
+    -*) usage >&2; die "unknown option: $1" ;;
+    *) srcs+=("$1"); shift ;;
+  esac
+done
+[ ${#srcs[@]} -gt 0 ] || { usage >&2; die "URL or FILE required"; }
+
+flags=()
+for f in ${formats//,/ }; do
+  case $f in
+    txt) flags+=(-otxt) ;;
+    srt) flags+=(-osrt) ;;
+    vtt) flags+=(-ovtt) ;;
+    json) flags+=("$jsonflag") ;;
+    *) die "unknown format: $f (use txt,srt,vtt,json)" ;;
+  esac
+done
+[[ $model =~ ^[A-Za-z0-9._-]+$ ]] || die "bad model name: $model"
+
+for t in whisper-cli ffmpeg; do
+  command -v "$t" >/dev/null || die "$t missing (sudo apt install whisper.cpp ffmpeg)"
+done
+
+# Model: download once, verify against the sha256 Hugging Face publishes, and go
+# through .part so a failed download leaves no broken file.
+mdir=${XDG_DATA_HOME:-$HOME/.local/share}/vidscribe
+mfile=$mdir/ggml-$model.bin
+if [ ! -s "$mfile" ]; then
+  mkdir -p "$mdir"
+  murl=https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-$model.bin
+  echo "vidscribe: downloading model $model ..." >&2
+  curl -fL --progress-bar -o "$mfile.part" "$murl" \
+    || { rm -f "$mfile.part"; die "model download failed (is '$model' a valid whisper.cpp model?)"; }
+  want=$(curl -fsI "$murl" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-linked-etag"{gsub(/"/,"",$2); print $2}')
+  if [ -z "$want" ]; then
+    echo "vidscribe: warning: no checksum published for $model, not verified" >&2
+  elif [ "$want" != "$(sha256sum "$mfile.part" | cut -d' ' -f1)" ]; then
+    rm -f "$mfile.part"; die "model checksum mismatch, download discarded"
+  fi
+  mv "$mfile.part" "$mfile"
+fi
+
+mkdir -p "$outdir"
+root=$(mktemp -d)
+trap 'rm -rf "$root"' EXIT
+
+taken() { local f; for f in ${formats//,/ }; do [ -e "$1.$f" ] && return 0; done; return 1; }
+
+# One source -> transcript files. Runs in a subshell so die only ends this source.
+transcribe() {
+  local src=$1 tmp=$root/$2 title out n=1 v
+  mkdir -p "$tmp"
+  if [ -f "$src" ]; then
+    title=$(basename "${src%.*}")
+    ffmpeg -loglevel error -i "$src" -ar 16000 -ac 1 "$tmp/a.wav" || die "ffmpeg failed on $src"
+  else
+    command -v yt-dlp >/dev/null || die "yt-dlp missing (sudo apt install yt-dlp)"
+    local ytargs=(-x --audio-format wav --postprocessor-args "ffmpeg:-ar 16000 -ac 1"
+                  -q --no-warnings --no-playlist -o "$tmp/a.%(ext)s" --print-to-file "%(title)s" "$tmp/title")
+    [ -z "$browser" ] || ytargs+=(--cookies-from-browser "$browser")
+    [ -z "$keep" ] || ytargs+=(-k)
+    yt-dlp "${ytargs[@]}" -- "$src" || die "download failed (login-walled? try -c firefox)"
+    title=$(head -n1 "$tmp/title" 2>/dev/null || true)
+  fi
+  title=$(printf %s "${title:-video}" | tr '/' '_' | tr -d '\000-\037' | cut -c1-100)
+  [ -s "$tmp/a.wav" ] || die "no audio extracted"
+
+  # Never overwrite an earlier transcript: same title -> title-2, title-3, ...
+  out=$outdir/$title
+  while taken "$out"; do n=$((n + 1)); out=$outdir/$title-$n; done
+
+  if [ -n "$keep" ] && [ ! -f "$src" ]; then
+    for v in "$tmp"/a.*; do
+      case $v in "$tmp"/a.wav|"$tmp"/a.f[0-9]*) continue ;; esac   # skip audio and yt-dlp's split streams
+      mv "$v" "$out.${v##*.}" || die "cannot save video"
+    done
+  fi
+
+  whisper-cli -m "$mfile" -f "$tmp/a.wav" -l "$lang" "${cpu[@]}" "${flags[@]}" -of "$out" >/dev/null 2>"$tmp/whisper.log" \
+    || { cat "$tmp/whisper.log" >&2; die "whisper-cli failed"; }
+  for f in ${formats//,/ }; do echo "$out.$f"; done
+}
+
+rc=0 i=0
+for s in "${srcs[@]}"; do
+  i=$((i + 1))
+  ( transcribe "$s" "$i" ) || { echo "vidscribe: failed: $s" >&2; rc=1; }
+done
+exit $rc
