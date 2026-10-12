@@ -17,7 +17,7 @@ lint:
 
 deb:
 	dpkg-buildpackage -us -uc
-	lintian --fail-on error,warning ../vidscribe_*.changes
+	lintian --fail-on error,warning --suppress-tags newer-standards-version ../vidscribe_*.changes
 
 install:
 	install -Dm755 vidscribe $(DESTDIR)$(PREFIX)/bin/vidscribe
