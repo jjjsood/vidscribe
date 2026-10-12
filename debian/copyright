@@ -1,9 +1,18 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: vidscribe
 Upstream-Contact: Johannes Sood <info@somestrangedays.dev>
+Source: https://github.com/jjjsood/vidscribe
+Comment: tests/fixtures/ (a CC BY-SA 3.0 speech clip) is not part of the Debian source
+ package, see debian/source/options.
 
 Files: *
 Copyright: 2026 Johannes Sood <info@somestrangedays.dev>
+License: MIT
+
+Files: debian/*
+Copyright: 2026 Johannes Sood <info@somestrangedays.dev>
+License: MIT
+
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
@@ -22,14 +31,3 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  DEALINGS IN THE SOFTWARE.
-
-Files: tests/fixtures/speech.ogg
-Copyright: Somejeff (speaker), authors of the English Wikipedia article "Bird"
-License: CC-BY-SA-3.0
- Licensed under the Creative Commons Attribution-ShareAlike 3.0 license,
- https://creativecommons.org/licenses/by-sa/3.0/legalcode
- Shortened and converted from https://commons.wikimedia.org/wiki/File:Bird_(Intro).ogg
-
-Files: debian/*
-Copyright: 2026 Johannes Sood <info@somestrangedays.dev>
-License: MIT

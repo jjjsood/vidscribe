@@ -1,0 +1,2 @@
+tar-ignore = tests/fixtures
+tar-ignore = .github

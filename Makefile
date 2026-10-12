@@ -14,8 +14,8 @@ lint:
 	shellcheck vidscribe tests/smoke.sh
 
 deb:
-	dpkg-buildpackage -us -uc -b
-	lintian --fail-on error,warning ../vidscribe_*_all.deb
+	dpkg-buildpackage -us -uc
+	lintian --fail-on error,warning ../vidscribe_*.changes
 
 install:
 	install -Dm755 vidscribe $(DESTDIR)$(PREFIX)/bin/vidscribe
