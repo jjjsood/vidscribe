@@ -24,7 +24,8 @@ if [ "${1:-}" != --quick ]; then
   "$v" "$speech" -m "$model" -l en -o "$out" >/dev/null
   grep -q -- '-->' "$out/speech.srt" || fail "srt has no timings"
   grep -qi bird "$out/speech.txt" || fail "transcript misses the word 'bird'"
-  [ -s "$out/speech.vtt" ] && [ -s "$out/speech.json" ] || fail "vtt/json missing"
+  [ -s "$out/speech.vtt" ] || fail "vtt missing"
+  [ -s "$out/speech.json" ] || fail "json missing"
 
   # same title again must not overwrite; one bad source must not stop the batch but must fail the run
   rc=0
